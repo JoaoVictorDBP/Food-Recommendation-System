@@ -1,1 +1,1 @@
-# site para mostrar as recomendações de alimentos
+# aplicação para recomendação de alimentos
