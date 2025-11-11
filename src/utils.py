@@ -1,37 +1,64 @@
+# Bibliotecas utilizadas
 import numpy as np
+import sys
 
 
-def tf_idf(data):
+# Aplica o algoritmo tf-idf na base de dados
+# O algoritmo associa as receitas aos seus repsectivos
+# vetores construidos utilizando o algoritmo tf-idf
+#
+# Parâmetros: Base de dados (dict)
+# Retorno: Dicionário com as receitas e os vetores tf-idf
+def tf_idf(data: dict) -> dict:
     tf_idf_dict = {}
     all_ingredients = []
 
+    # Armazena todos os ingredientes no array all_ingredients
     for key, value in data.items():
         for ingredients in value:
             all_ingredients.append(ingredients)
 
+    # Caso não haja dados suficientes, sai do programa
+    if (len(all_ingredients) < 2):
+        print("Não há dados suficientes para executar o algoritmo")
+        sys.exit(0)
+
+    # Ordena o array e remove duplicatas
     all_ingredients = np.sort(np.unique(all_ingredients))
 
     for key, value in data.items():
+        # Cria o vetor dos ingredientes (inicializados com zero)
         ingredients_vector = np.zeros(len(all_ingredients))
+        # Aplica o tf
         tf_value = tf(value)
 
+        # Constroi o vetor de frequência dos ingredientes para cada receita
         for ingredient in value:
             tf_idf_res = tf_value*idf(data, ingredient)
             idx = all_ingredients.index(ingredient)
             ingredients_vector[idx] = tf_idf_res
 
+        # Associa uma receita ao seu vetor de ingredientes
         tf_idf_dict[key] = ingredients_vector
 
     return tf_idf_dict
 
 
-def tf(ingredient_list):
+# Calcula a frequência de um termo dentro do vetor de ingredientes
+#
+# Parâmetros: lista de ingredientes
+# Retorno: frequência
+def tf(ingredient_list: list) -> float:
     n_ingredients = len(ingredient_list)
 
     return 1/n_ingredients
 
 
-def idf(data, t):
+# Calcula o frquência inversa do documento (idf)
+#
+# Parâmetros: Base de dados, termo
+# Retorno: resultado do idf
+def idf(data: dict, t: str) -> float:
     n = len(data)
     nt = 0
 
@@ -46,7 +73,11 @@ def idf(data, t):
     return idf_res
 
 
-def cosine_sim(A, B):
+# Calcula a similaridade de cossenos
+#
+# Parâmetros: Vetores A e B
+# Retorno: Valor da similaridade
+def cosine_sim(A: list, B: list) -> float:
 
     norm_A = np.linalg.norm(A)
     norm_B = np.linalg.norm(B)
@@ -56,7 +87,11 @@ def cosine_sim(A, B):
     return cosine_sim
 
 
-def jaccard_sim(A, B):
+# Calcula a similaridade de jaccard
+#
+# Parâmetros: Vetores A e B
+# Retorno: Valor da similaridade
+def jaccard_sim(A: list, B: list) -> float:
 
     set_A = set(A)
     set_B = set(B)
@@ -67,24 +102,45 @@ def jaccard_sim(A, B):
     return intersection / union
 
 
-def mean_profile_recommendation(data, user_food):
+# Utiliza o algoritmo tf-idf e similaridade de cossenos
+# para gerar um ranking dos pratos recomendados para o usuário
+#
+#
+# Parâmetros: Base de dados, pratos escolhidos pelo user
+def tf_idf_recommendation(data: dict, user_food: list) -> dict:
+
+    # Usa o algoritmo tf-idf para o embedding das receitas
     food_vector = tf_idf(data)
 
-    user_vector = [food_vector[dish]
-                   for dish in user_food if user_food in food_vector]
+    # Cria um vetor de usuário
+    user_vector = [food_vector[recipe]
+                   for recipe in user_food if user_food in food_vector]
 
+    # Calcula a média entre os valores das receitas escolhidas pelo usuário
     profile_mean = np.mean(user_vector, axis=0)
 
     sim = {}
 
-    for key, value in food_vector.items():
-        if key in user_food:
+    # Aplica similaridade de cossenos entre o vetor de usuário e os pratos da base de dados
+    for recipe, vector in food_vector.items():
+        if recipe == user_food:
             continue
+        cos_sim = cosine_sim(profile_mean, vector)
+        sim[recipe] = cos_sim
 
-    cos_sim = cosine_sim(profile_mean, value)
-    sim[key] = cos_sim
-
+    # Ordena as similaridades em ordem decrescente
     sorted_recommendation = sorted(
         sim.items(), key=lambda item: item[1], reverse=True)
 
-    return sorted_recommendation
+    # Top 4 recomendações
+    k = 4
+    top_recipes = {}
+    counter = 0
+
+    for recipes, similarity in sorted_recommendation.items():
+        if counter == k:
+            break
+
+        top_recipes[recipes] = similarity
+
+    return top_recipes
