@@ -14,17 +14,7 @@ def tf_idf(data: dict) -> dict:
     all_ingredients = []
 
     # Armazena todos os ingredientes no array all_ingredients
-    for key, value in data.items():
-        for ingredients in value:
-            all_ingredients.append(ingredients)
-
-    # Caso não haja dados suficientes, sai do programa
-    if (len(all_ingredients) < 2):
-        print("Não há dados suficientes para executar o algoritmo")
-        sys.exit(0)
-
-    # Ordena o array e remove duplicatas
-    all_ingredients = np.sort(np.unique(all_ingredients))
+    all_ingredients = collect_all_ingridients(data)
 
     for key, value in data.items():
         # Cria o vetor dos ingredientes (inicializados com zero)
@@ -102,6 +92,46 @@ def jaccard_sim(A: list, B: list) -> float:
     return intersection / union
 
 
+# Função que obtem todos os ingredientes e armazena em um array
+#
+# Parâmetros: base de dados
+# Retorno: lista dos ingredientes
+def collect_all_ingridients(data: dict) -> list:
+    all_ingredients = []
+
+    for key, value in data.items():
+        for ingredients in value:
+            all_ingredients.append(ingredients)
+
+    # Caso não haja dados suficientes, sai do programa
+    if (len(all_ingredients) < 2):
+        print("Não há dados suficientes para executar o algoritmo")
+        sys.exit(0)
+
+    # Ordena o array e remove duplicatas
+    all_ingredients = np.sort(np.unique(all_ingredients))
+
+    return all_ingredients
+
+
+def calculate_ranked_list(food_vector, user_food, profile_mean):
+    sim = {}
+
+    # Aplica similaridade de cossenos entre o vetor de usuário e
+    # os pratos da base de dados
+    for recipe, vector in food_vector.items():
+        if recipe == user_food:
+            continue
+        cos_sim = cosine_sim(profile_mean, vector)
+        sim[recipe] = cos_sim
+
+    # Ordena as similaridades em ordem decrescente
+    sorted_recommendation = sorted(
+        sim.items(), key=lambda item: item[1], reverse=True)
+
+    return sorted_recommendation
+
+
 # Utiliza o algoritmo tf-idf e similaridade de cossenos
 # para gerar um ranking dos pratos recomendados para o usuário
 #
@@ -119,25 +149,15 @@ def tf_idf_recommendation(data: dict, user_food: list) -> dict:
     # Calcula a média entre os valores das receitas escolhidas pelo usuário
     profile_mean = np.mean(user_vector, axis=0)
 
-    sim = {}
-
-    # Aplica similaridade de cossenos entre o vetor de usuário e os pratos da base de dados
-    for recipe, vector in food_vector.items():
-        if recipe == user_food:
-            continue
-        cos_sim = cosine_sim(profile_mean, vector)
-        sim[recipe] = cos_sim
-
-    # Ordena as similaridades em ordem decrescente
-    sorted_recommendation = sorted(
-        sim.items(), key=lambda item: item[1], reverse=True)
+    ranked_list = calculate_ranked_list(
+        food_vector, user_food, profile_mean)
 
     # Top 4 recomendações
     k = 4
     top_recipes = {}
     counter = 0
 
-    for recipes, similarity in sorted_recommendation.items():
+    for recipes, similarity in ranked_list.items():
         if counter == k:
             break
 
