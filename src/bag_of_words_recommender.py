@@ -5,7 +5,6 @@ import numpy as np
 def bag_of_words(data: dict, user_food) -> dict:
     all_ingredients = []
     food_vector = {}
-    sim = {}
 
     # Armazena todos os ingredientes no array all_ingredients
     all_ingredients = collect_all_ingridients(data)
@@ -44,4 +43,3 @@ def bag_of_words(data: dict, user_food) -> dict:
         top_recipes[recipes] = similarity
 
     return top_recipes
-
