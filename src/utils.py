@@ -109,7 +109,7 @@ def collect_all_ingridients(data: dict) -> list:
         sys.exit(0)
 
     # Ordena o array e remove duplicatas
-    all_ingredients = np.sort(np.unique(all_ingredients))
+    all_ingredients = sorted(list(set(all_ingredients)))
 
     return all_ingredients
 
@@ -120,7 +120,7 @@ def calculate_ranked_list(food_vector, user_food, profile_mean):
     # Aplica similaridade de cossenos entre o vetor de usuário e
     # os pratos da base de dados
     for recipe, vector in food_vector.items():
-        if recipe == user_food:
+        if recipe in user_food:
             continue
         cos_sim = cosine_sim(profile_mean, vector)
         sim[recipe] = cos_sim

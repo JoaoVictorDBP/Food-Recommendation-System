@@ -15,7 +15,7 @@ def tf_idf_recommendation(data: dict, user_food: list) -> dict:
 
     # Cria um vetor de usuário
     user_vector = [food_vector[recipe]
-                   for recipe in user_food if user_food in food_vector]
+                   for recipe in user_food if recipe in food_vector]
 
     # Calcula a média entre os valores das receitas escolhidas pelo usuário
     profile_mean = np.mean(user_vector, axis=0)
@@ -28,10 +28,11 @@ def tf_idf_recommendation(data: dict, user_food: list) -> dict:
     top_recipes = {}
     counter = 0
 
-    for recipes, similarity in ranked_list.items():
+    for recipes, similarity in ranked_list:
         if counter == k:
             break
 
         top_recipes[recipes] = similarity
+        counter += 1
 
     return top_recipes
