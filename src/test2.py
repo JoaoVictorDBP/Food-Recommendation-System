@@ -1,7 +1,7 @@
 from load_data import load_afrodite
 from preprocessing import preprocess_ingredients, make_text_data
 from tf_idf_recommender import tf_idf_recommendation
-from graph_recommender import build_graph
+from graph_recommender import build_bipartid_graph
 
 # Careggando e processando os dados
 df = load_afrodite()
@@ -19,4 +19,4 @@ print("\nRecomendações:")
 for prato, score in recs.items():
     print(f"{prato}: {score:.4f}")
 
-print(build_graph(data))
+print(build_bipartid_graph(data))
