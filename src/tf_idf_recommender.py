@@ -7,8 +7,10 @@ import numpy as np
 # para gerar um ranking dos pratos recomendados para o usuário
 #
 #
-# Parâmetros: Base de dados, pratos escolhidos pelo user
-def tf_idf_recommendation(data: dict, user_food: list) -> dict:
+# Parâmetros: Base de dados, pratos escolhidos pelo user,
+# flag para a inverter a ordem da lista ranqueada
+def tf_idf_recommendation(data: dict, user_food: list,
+                          inverse: bool = False) -> dict:
 
     # Usa o algoritmo tf-idf para o embedding das receitas
     food_vector = tf_idf(data)
@@ -21,7 +23,7 @@ def tf_idf_recommendation(data: dict, user_food: list) -> dict:
     profile_mean = np.mean(user_vector, axis=0)
 
     ranked_list = calculate_ranked_list(
-        food_vector, user_food, profile_mean)
+        food_vector, user_food, profile_mean, inverse)
 
     # Top 4 recomendações
     k = 4

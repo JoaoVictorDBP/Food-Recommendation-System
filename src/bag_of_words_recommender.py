@@ -2,7 +2,8 @@ from utils import collect_all_ingridients, calculate_ranked_list
 import numpy as np
 
 
-def bag_of_words(data: dict, user_food) -> dict:
+def bag_of_words(data: dict, user_food: list,
+                 inverse=False) -> dict:
     all_ingredients = []
     food_vector = {}
 
@@ -28,7 +29,8 @@ def bag_of_words(data: dict, user_food) -> dict:
     profile_mean = np.mean(user_vector, axis=0)
 
     # Calcula e retorna uma lista ranqueada
-    ranked_list = calculate_ranked_list(food_vector, user_food, profile_mean)
+    ranked_list = calculate_ranked_list(food_vector, user_food,
+                                        profile_mean, inverse)
 
     # Calcular os top 4
     # Top 4 recomendações
