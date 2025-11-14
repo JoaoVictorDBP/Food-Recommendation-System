@@ -10,17 +10,63 @@ import re
 # Retorno:
 #   string limpa contendo apenas o nome do ingrediente
 def clean_ingredient(ing: str) -> str:
-    ing = ing.lower()  # Converte para minúsculas
+    ing = ing.lower()
 
-    # Remove quantidades e unidades de medida comuns (ex: "2 colheres", "100g", "1 xícara")
-    ing = re.sub(r"\d+[.,]?\d*|\b(ml|g|kg|xícara|colher|colheres|unidade|unidades|pedaço|litro|l)\b", "", ing)
+    # Remove quantidades e unidades
+    ing = re.sub(
+        r"\b\d+[.,]?\d*\b", " ", ing
+    )
+    ing = re.sub(
+        r"\b(ml|g|kg|mg|litro|xícara|xicara|colher|colheres|lata|latas|"
+        r"unidade|unidades|pacote|pacotes|gramas?)\b", 
+        " ", ing
+    )
 
-    # Remove caracteres especiais e mantém apenas letras e espaços
-    ing = re.sub(r"[^a-zA-ZÀ-ÿ\s]", "", ing)
+    # Remove adjetivos culinários comuns
+    CULINARY_DESCRIPTORS = [
+        "picado", "picada", "picados", "picadas",
+        "fatiado", "fatiada",
+        "ralado", "ralada",
+        "moído", "moida", "moidos", "moidas",
+        "triturado", "triturada",
+        "cortado", "cortada", "em cubos", "em pedaços",
+        "fresco", "fresca",
+        "cozido", "cru", "crua",
+        "temperado", "sem sal", "com sal"
+    ]
 
-    # Remove espaços extras e palavras "de" isoladas no início ou final
-    ing = ing.strip()
-    ing = re.sub(r"^de\s+|\s+de$", "", ing)
+    for desc in CULINARY_DESCRIPTORS:
+        ing = ing.replace(desc, " ")
+
+    # Remove símbolos e múltiplos espaços
+    ing = re.sub(r"[^a-zA-Zà-ÿ\s]", " ", ing)
+    ing = re.sub(r"\s+", " ", ing).strip()
+
+    # Normalização por dicionário de equivalências
+    NORMALIZATION_MAP = {
+        "chocolate meio amargo": "chocolate",
+        "chocolate ao leite": "chocolate",
+        "chocolate amargo": "chocolate",
+        "cacau em po": "cacau",
+        "acucar refinado": "acucar",
+        "acucar cristal": "acucar",
+        "manteiga sem sal": "manteiga",
+        "manteiga com sal": "manteiga",
+        "farinha de trigo": "farinha",
+        "farinha de milho fina": "farinha de milho",
+        "oleo vegetal": "oleo",
+        "ovo": "ovos",
+        "noz": "nozes",
+        "nozes picadas": "nozes",
+        "suco de gengibre": "gengibre",
+    }
+
+    for k, v in NORMALIZATION_MAP.items():
+        if ing == k or ing.startswith(k):
+            ing = v
+
+    # Remove "de" em excesso (mas mantém compostos reais ex: "água de coco")
+    ing = re.sub(r"^de\s+|\s+de$", "", ing).strip()
     ing = re.sub(r"\s+", " ", ing)
 
     return ing
