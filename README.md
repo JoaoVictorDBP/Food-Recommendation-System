@@ -9,6 +9,7 @@
 
 # DataSet
 
-* Estamos utilizando o arquivo afrodite.json para obtenção das receitas e seus respectivos ingredientes.
-* Dataset: https://github.com/adrianosferreira/afrodite.json
+* Estamos utilizando dados obtidos via scrapping do site CyberCook
+* Link do site: https://cybercook.com.br/
+* Dataset: presente em data/receitas.json
 

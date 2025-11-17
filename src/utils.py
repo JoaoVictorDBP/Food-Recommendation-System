@@ -126,9 +126,16 @@ def calculate_ranked_list(food_vector: list, user_food: list,
         cos_sim = cosine_sim(profile_mean, vector)
         sim[recipe] = cos_sim
 
-    # Ordena as similaridades em ordem decrescente
+    # Caso normal → ordena do mais parecido para o menos parecido
     if not inverse:
         sorted_recommendation = sorted(
-            sim.items(), key=lambda item: item[1], reverse=True)
+            sim.items(), key=lambda item: item[1], reverse=True
+        )
+    # Caso inverso → ordena do menos parecido para o mais parecido
+    else:
+        sorted_recommendation = sorted(
+            sim.items(), key=lambda item: item[1], reverse=False
+        )
 
     return sorted_recommendation
+

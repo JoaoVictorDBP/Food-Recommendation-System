@@ -71,48 +71,25 @@ def clean_ingredient(ing: str) -> str:
 
     return ing
 
-# Função que aplica a limpeza em todos os ingredientes da base
-# e cria um texto consolidado com todos os dados relevantes.
-#
-# Parâmetros:
-#   df (DataFrame): base de dados com colunas de ingredientes e preparo
-# Retorno:
-#   DataFrame com colunas adicionais 'ingredientes_limpos' e 'texto_completo'
-def preprocess_ingredients(df: pd.DataFrame) -> pd.DataFrame:
-    
-    # Cria uma nova coluna com os ingredientes limpos
-    df["ingredientes_limpos"] = df["ingredientes"].apply(
-        lambda lista: [clean_ingredient(i) for i in lista if isinstance(i, str) and i.strip()]
-    )
+# Processamento da base SCRAPING (dict)
+def preprocess_scraped_ingredients(data: dict) -> dict:
+    # data: {prato: [ingredientes brutos]}
+    processed = {}
 
-    # Cria uma coluna 'texto_completo' unindo ingredientes, preparo e outras informações
-    df["texto_completo"] = df.apply(
-        lambda row: " ".join(
-            row.get("ingredientes_limpos", []) +
-            row.get("modo_preparo", []) +
-            row.get("outras_infos", [])
-        ).strip(),
-        axis=1
-    )
+    for prato, ingredientes in data.items():
+        limpos = []
+        for ing in ingredientes:
+            if isinstance(ing, str) and ing.strip():
+                limpos.append(clean_ingredient(ing))
 
-    return df
+        # remove duplicados
+        limpos = sorted(list(set(limpos)))
 
-# Converte o DataFrame em um dicionário {nome_prato: [lista_ingredientes_limpos]}
-#
-# Parâmetros:
-#   df (DataFrame): base já pré-processada
-# Retorno:
-#   dicionário de pratos e respectivos ingredientes limpos
-def make_text_data(df: pd.DataFrame) -> dict:
-    return dict(zip(df["prato"], df["ingredientes_limpos"]))
+        processed[prato.lower().strip()] = limpos
 
-# Bloco de teste — executado apenas se o script for chamado diretamente
-if __name__ == "__main__":
-    from load_data import load_afrodite  # Importa a função de carregamento
-    df = load_afrodite()                 # Carrega os dados brutos
-    df = preprocess_ingredients(df)      # Aplica o pré-processamento
-    data = make_text_data(df)            # Cria o dicionário final
+    return processed
 
-    # Mostra alguns exemplos de saída
-    for k, v in list(data.items())[:3]:
-        print(f"\n{k}:\n{v[:200]}...")
+
+def make_scraping_text_data(data: dict) -> dict:
+    # retorna lista de ingredientes (tokens), igual ao Afrodite
+    return {k: v for k, v in data.items() if isinstance(v, list) and len(v) > 0}
