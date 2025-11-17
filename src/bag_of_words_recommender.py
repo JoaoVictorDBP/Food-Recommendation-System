@@ -12,7 +12,7 @@ def bag_of_words(data: dict, user_food: list,
 
     for recipe, ingredients in data.items():
 
-        vector_ingredients = np.zeroes(len(all_ingredients))
+        vector_ingredients = np.zeros(len(all_ingredients))
 
         # Criando vetor de ingredientes para cada receita
         for ingredient in ingredients:
@@ -23,7 +23,7 @@ def bag_of_words(data: dict, user_food: list,
 
     # Cria um vetor de usuário
     user_vector = [food_vector[recipe]
-                   for recipe in user_food if user_food in food_vector]
+                   for recipe in user_food if recipe in food_vector]
 
     # Calcula a média entre os valores das receitas escolhidas pelo usuário
     profile_mean = np.mean(user_vector, axis=0)
@@ -38,10 +38,11 @@ def bag_of_words(data: dict, user_food: list,
     top_recipes = {}
     counter = 0
 
-    for recipes, similarity in ranked_list.items():
+    for recipes, similarity in ranked_list:
         if counter == k:
             break
 
         top_recipes[recipes] = similarity
+        counter += 1
 
     return top_recipes
