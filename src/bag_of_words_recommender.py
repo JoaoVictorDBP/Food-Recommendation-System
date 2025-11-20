@@ -2,8 +2,7 @@ from utils import collect_all_ingridients, calculate_ranked_list
 import numpy as np
 
 
-def bag_of_words(data: dict, user_food: list,
-                 inverse=False) -> dict:
+def bag_of_words(data: dict, user_food: list) -> dict:
     all_ingredients = []
     food_vector = {}
 
@@ -30,19 +29,6 @@ def bag_of_words(data: dict, user_food: list,
 
     # Calcula e retorna uma lista ranqueada
     ranked_list = calculate_ranked_list(food_vector, user_food,
-                                        profile_mean, inverse)
+                                        profile_mean)
 
-    # Calcular os top 4
-    # Top 4 recomendações
-    k = 4
-    top_recipes = {}
-    counter = 0
-
-    for recipes, similarity in ranked_list:
-        if counter == k:
-            break
-
-        top_recipes[recipes] = similarity
-        counter += 1
-
-    return top_recipes
+    return ranked_list

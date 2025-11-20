@@ -9,8 +9,7 @@ import numpy as np
 #
 # Parâmetros: Base de dados, pratos escolhidos pelo user,
 # flag para a inverter a ordem da lista ranqueada
-def tf_idf_recommendation(data: dict, user_food: list,
-                          inverse: bool = False) -> dict:
+def tf_idf_recommendation(data: dict, user_food: list) -> dict:
 
     # Usa o algoritmo tf-idf para o embedding das receitas
     food_vector = tf_idf(data)
@@ -23,18 +22,8 @@ def tf_idf_recommendation(data: dict, user_food: list,
     profile_mean = np.mean(user_vector, axis=0)
 
     ranked_list = calculate_ranked_list(
-        food_vector, user_food, profile_mean, inverse)
+        food_vector, user_food, profile_mean)
 
-    # Top 4 recomendações
-    k = 4
-    top_recipes = {}
-    counter = 0
+    
 
-    for recipes, similarity in ranked_list:
-        if counter == k:
-            break
-
-        top_recipes[recipes] = similarity
-        counter += 1
-
-    return top_recipes
+    return ranked_list

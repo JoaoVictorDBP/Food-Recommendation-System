@@ -115,7 +115,7 @@ def collect_all_ingridients(data: dict) -> list:
 
 
 def calculate_ranked_list(food_vector: list, user_food: list,
-                          profile_mean: list, inverse: bool) -> dict:
+                          profile_mean: list) -> dict:
     sim = {}
 
     # Aplica similaridade de cossenos entre o vetor de usuário e
@@ -127,15 +127,9 @@ def calculate_ranked_list(food_vector: list, user_food: list,
         sim[recipe] = cos_sim
 
     # Caso normal → ordena do mais parecido para o menos parecido
-    if not inverse:
-        sorted_recommendation = sorted(
-            sim.items(), key=lambda item: item[1], reverse=True
-        )
-    # Caso inverso → ordena do menos parecido para o mais parecido
-    else:
-        sorted_recommendation = sorted(
-            sim.items(), key=lambda item: item[1], reverse=False
-        )
 
-    return sorted_recommendation
+    sorted_recommendation = sorted(
+        sim.items(), key=lambda item: item[1], reverse=True
+    )
 
+    return dict(sorted_recommendation)
