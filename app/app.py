@@ -1,15 +1,17 @@
-# aplicação para recomendação de alimentos
 import sys
 import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
+sys.path.append(os.path.abspath(os.path.join(
+    os.path.dirname(__file__), "..", "src")))
 
+
+from tf_idf_recommender import tf_idf_recommendation
+from preprocessing import preprocess_scraped_ingredients, make_scraping_text_data
+from load_data import load_scraping
 import streamlit as st
 
-from load_data import load_scraping
-from preprocessing import preprocess_scraped_ingredients, make_scraping_text_data
-from tf_idf_recommender import tf_idf_recommendation
 
 # Função para tentar localizar pratos
+
 def match_receita(nome, data):
     nome = nome.lower().strip()
 
@@ -25,6 +27,8 @@ def match_receita(nome, data):
     return None
 
 # Carregando dados para recomendação
+
+
 @st.cache_data(show_spinner=True)
 def carregar_dados():
     data = load_scraping()
@@ -32,6 +36,7 @@ def carregar_dados():
     data = make_scraping_text_data(data)
     data = {k: v for k, v in data.items() if len(v) > 0}
     return data
+
 
 data = carregar_dados()
 
@@ -70,8 +75,12 @@ if st.button("Gerar Recomendação"):
         </div>
     """, unsafe_allow_html=True)
 
-    recomendados = tf_idf_recommendation(data, [prato_escolhido])
-    n_recomendados = tf_idf_recommendation(data, [prato_escolhido], inverse=True)
+    k = 4
+    todos_pratos = tf_idf_recommendation(data, [prato_escolhido])
+    todos_pratos = list(todos_pratos.keys())
+    recomendados = todos_pratos[:k]
+
+    n_recomendados = todos_pratos[::-1][:k]
 
     gif_placeholder.empty()
 
@@ -84,6 +93,6 @@ if st.button("Gerar Recomendação"):
                 st.write("- " + r)
 
         with col2:
-            st.subheader("Você provavelmente não vai gostar de:")
+            st.subheader("Explore novos pratos:")
             for r in n_recomendados:
                 st.write("- " + r)
