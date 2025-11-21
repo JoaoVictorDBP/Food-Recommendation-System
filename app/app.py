@@ -3,71 +3,91 @@ import os
 sys.path.append(os.path.abspath(os.path.join(
     os.path.dirname(__file__), "..", "src")))
 
+import streamlit as st
 
 from tf_idf_recommender import tf_idf_recommendation
 from preprocessing import preprocess_scraped_ingredients, make_scraping_text_data
 from load_data import load_scraping
-import streamlit as st
 
-
-# Função para tentar localizar pratos
 
 def match_receita(nome, data):
+    """
+    Tenta localizar na base a receita cujo nome corresponde ao texto digitado
+    pelo usuário.
+
+    Métodos utilizados:
+      • Match exato  → retorna a receita se o nome for idêntico.
+      • Match parcial → retorna a primeira receita cujo nome contenha a string.
+
+    Parâmetros:
+        nome (str): Texto digitado pelo usuário.
+        data (dict): Base de receitas já pré-processada.
+
+    Retorno:
+        str | None: Nome da receita encontrada ou None se nenhuma combinar.
+    """
     nome = nome.lower().strip()
 
-    # match exato
     if nome in data:
         return nome
 
-    # match parcial
     for k in data:
         if nome in k:
             return k
 
     return None
 
-# Carregando dados para recomendação
 
 
 @st.cache_data(show_spinner=True)
 def carregar_dados():
-    data = load_scraping()
-    data = preprocess_scraped_ingredients(data)
+    """
+    Carrega os dados brutos do scraping, aplica toda a pipeline de
+    preprocessamento e retorna a base pronta para uso do TF-IDF.
+
+    Etapas:
+      1. load_scraping() → carrega receitas cruas.
+      2. preprocess_scraped_ingredients() → normaliza títulos e limpa ingredientes.
+      3. make_scraping_text_data() → remove receitas vazias.
+
+    Retorno:
+        dict: Base final no formato {nome_receita: [lista_ingredientes]}
+    """
+    raw = load_scraping()
+    data = preprocess_scraped_ingredients(raw)
     data = make_scraping_text_data(data)
-    data = {k: v for k, v in data.items() if len(v) > 0}
     return data
 
 
 data = carregar_dados()
 
-
 st.title("Recomendando pratos que você ama (ou odeia) 😋😖")
 
+# Input do usuário contendo o prato favorito
 prato_favorito = st.text_input("Me diga seu prato favorito:")
 
 
 if st.button("Gerar Recomendação"):
 
-    # Verifica se o usuário digitou algo
-    if prato_favorito is None or prato_favorito.strip() == "":
+    # Valida input vazio
+    if not prato_favorito.strip():
         st.warning("Por favor, digite um prato.")
         st.stop()
 
-    # Tenta localizar a receita na base
+    # Tenta encontrar o prato dentro da base
     prato_escolhido = match_receita(prato_favorito, data)
 
-    # Se não encontrou, avisa que não está na base
     if prato_escolhido is None:
         st.warning("Prato não encontrado na base, tente outro.")
         st.stop()
 
-    # Normaliza o nome encontrado
     prato_escolhido = prato_escolhido.lower().strip()
 
-    # Executa recomendações (positiva e negativa)
+    # Espaços para exibir GIF de processamento e o resultado final
     gif_placeholder = st.empty()
     result_placeholder = st.empty()
 
+    # Exibe animação enquanto calcula recomendações
     gif_placeholder.markdown("""
         <div style="text-align:center">
             <img src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExaGEzdWh4aDB3eG82dWc4bDZ4cmlkdHBrY203M2UwemV5bHd4MDN6eCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/p0dFF6nzn1DZKKyNdo/giphy.gif" width="180">
@@ -75,15 +95,23 @@ if st.button("Gerar Recomendação"):
         </div>
     """, unsafe_allow_html=True)
 
-    k = 4
-    todos_pratos = tf_idf_recommendation(data, [prato_escolhido])
-    todos_pratos = list(todos_pratos.keys())
-    recomendados = todos_pratos[:k]
+    # Executa o motor de recomendação baseado em TF-IDF
+    # Retorna uma lista ordenada de pratos semelhantes ao escolhido
+    todos_pratos = list(tf_idf_recommendation(data, [prato_escolhido]).keys())
 
+    # Remove recomendações que contenham literalmente a string digitada
+    # Isso evita sugerir o próprio prato ou variantes de nome
+    query = prato_favorito.lower().strip()
+    todos_pratos = [p for p in todos_pratos if query not in p]
+
+    # Seleciona 4 mais parecidos e 4 menos parecidos
+    k = 4
+    recomendados = todos_pratos[:k]
     n_recomendados = todos_pratos[::-1][:k]
 
     gif_placeholder.empty()
 
+    # Exibe resultados
     with result_placeholder.container():
         col1, col2 = st.columns(2)
 
@@ -93,6 +121,6 @@ if st.button("Gerar Recomendação"):
                 st.write("- " + r)
 
         with col2:
-            st.subheader("Explore novos pratos:")
+            st.subheader("Tente explorar novos pratos:")
             for r in n_recomendados:
                 st.write("- " + r)
