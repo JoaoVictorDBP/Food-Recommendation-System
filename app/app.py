@@ -8,6 +8,8 @@ import streamlit as st
 from tf_idf_recommender import tf_idf_recommendation
 from preprocessing import preprocess_scraped_ingredients, make_scraping_text_data
 from load_data import load_scraping
+from node2vec_recommender import get_graph_recommendations
+import pickle
 
 
 def match_receita(nome, data):
@@ -58,8 +60,17 @@ def carregar_dados():
     data = make_scraping_text_data(data)
     return data
 
+#Carrega valores de embeddings
+@st.cache_resource
+def carregar_embeddings():
+    try:
+        with open("graph_embeddings.pkl", "rb") as f:
+            return pickle.load(f)
+    except FileNotFoundError:
+        return None
 
 data = carregar_dados()
+embeddings = carregar_embeddings()
 
 st.title("Recomendando pratos que você ama (ou odeia) 😋😖")
 
@@ -97,16 +108,17 @@ if st.button("Gerar Recomendação"):
 
     # Executa o motor de recomendação baseado em TF-IDF
     # Retorna uma lista ordenada de pratos semelhantes ao escolhido
+    pratos_embeddings = get_graph_recommendations(prato_escolhido, embeddings)
     todos_pratos = list(tf_idf_recommendation(data, [prato_escolhido]).keys())
 
     # Remove recomendações que contenham literalmente a string digitada
     # Isso evita sugerir o próprio prato ou variantes de nome
     query = prato_favorito.lower().strip()
-    todos_pratos = [p for p in todos_pratos if query not in p]
+    pratos_embeddings = [p for p in pratos_embeddings if query not in p]
 
     # Seleciona 4 mais parecidos e 4 menos parecidos
     k = 4
-    recomendados = todos_pratos[:k]
+    recomendados = pratos_embeddings[:k]
     n_recomendados = todos_pratos[::-1][:k]
 
     gif_placeholder.empty()
