@@ -7,7 +7,9 @@ sys.path.append(os.path.abspath(os.path.join(
 from tf_idf_recommender import tf_idf_recommendation
 from preprocessing import preprocess_scraped_ingredients, make_scraping_text_data
 from load_data import load_scraping
+from node2vec_recommender import get_graph_recommendations
 import streamlit as st
+import pickle
 
 
 # Função para tentar localizar pratos
@@ -27,8 +29,6 @@ def match_receita(nome, data):
     return None
 
 # Carregando dados para recomendação
-
-
 @st.cache_data(show_spinner=True)
 def carregar_dados():
     data = load_scraping()
@@ -37,8 +37,17 @@ def carregar_dados():
     data = {k: v for k, v in data.items() if len(v) > 0}
     return data
 
+#Carrega os valores dos embeddings
+@st.cache_resource
+def carregar_embeddings():
+    try:
+        with open("graph_embeddings.pkl", "rb") as f:
+            return pickle.load(f)
+    except FileNotFoundError:
+        return None
 
 data = carregar_dados()
+embeddings = carregar_embeddings()
 
 
 st.title("Recomendando pratos que você ama (ou odeia) 😋😖")
@@ -76,9 +85,8 @@ if st.button("Gerar Recomendação"):
     """, unsafe_allow_html=True)
 
     k = 4
-    todos_pratos = tf_idf_recommendation(data, [prato_escolhido])
-    todos_pratos = list(todos_pratos.keys())
-    recomendados = todos_pratos[:k]
+    todos_pratos = get_graph_recommendations(prato_escolhido, embeddings)
+    recomendados = todos_pratos[:k] 
 
     n_recomendados = todos_pratos[::-1][:k]
 
